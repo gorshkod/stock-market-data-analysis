@@ -3,7 +3,7 @@ stocks.py
 
 A Python script to retrieve and process stock data from the NASDAQ API.
 
-Currently, the script only retrieves the data and prints it in JSON format.
+Currently, the script does not implement file output and only prints the stock stats in JSON format.
 
 Usage: python stocks.py <TICKER1> ...
 
@@ -12,6 +12,7 @@ Author: Daniil Gorshkov
 import sys # For getting command-line arguments
 from requests import get # For downloading data from the NASDAQ API
 from datetime import date # For etting the start date for the data range
+from statistics import mean, median # For calculating the average and median closing prices
 from json import dumps # For printing the data in JSON format (testing acquisition)
 
 def download_data(ticker: str) -> dict:
@@ -53,17 +54,38 @@ def process_data(data: dict) -> dict:
     Processes the data and returns a dictionary with the minimum, maximum, average, and median closing prices.
     Not implemented yet.
     """
-    pass
+    if data == {}: # If the data is empty (data acquisition failed), return an empty dictionary
+        return {}
+    
+    # Extract the list of dictionaries with daily data from the 'rows' field
+    rows = data["data"]["tradesTable"]["rows"]
+    
+    # Extract the closing prices from the 'close' field in each dictionary as floats (remove dollar signs and commas used for price notation)
+    closing_prices = [float(row["close"].replace("$", "").replace(",", "")) for row in rows]
+    
+    return {
+        "min": min(closing_prices),
+        "max": max(closing_prices),
+        "avg": mean(closing_prices),
+        "median": median(closing_prices),
+        "ticker": data["data"]["symbol"]
+    }
 
 def main():
     arguments = sys.argv
     if len(arguments) < 2: # If the user did not provide any tickers, print the usage message and exit
         print("Usage: python stocks.py <TICKER1> ...") 
         sys.exit(1)
+        
+    stats_list = [] # Initialize an empty list to store the extracted statistics
     
     for ticker in arguments[1:]: # Process each ticker
         data = download_data(ticker) # Download the data
-        print(dumps(data, indent=4)) # Print the data in JSON format (for testing)
+        stats = process_data(data) # Process the data to extract statistics
+        if stats: # If the stats are not empty (data processing was successful), add them to the list
+            stats_list.append(stats)
+        
+    print(dumps(stats_list, indent=4)) # Print the stat list in JSON format (for testing)
         
 
 if __name__ == "__main__": # Run the main function if the script is executed directly and not imported
