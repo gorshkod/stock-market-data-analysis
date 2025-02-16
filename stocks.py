@@ -3,17 +3,18 @@ stocks.py
 
 A Python script to retrieve and process stock data from the NASDAQ API.
 
-Currently, the script does not implement file output and only prints the stock stats in JSON format.
+Final version, ready for submission.
 
 Usage: python stocks.py <TICKER1> ...
 
 Author: Daniil Gorshkov
 """
+
 import sys # For getting command-line arguments
 from requests import get # For downloading data from the NASDAQ API
-from datetime import date # For etting the start date for the data range
+from datetime import date # For getting the start date for the data range
 from statistics import mean, median # For calculating the average and median closing prices
-from json import dumps # For printing the data in JSON format (testing acquisition)
+from json import dump, dumps # For writing the stats to JSON file and to command line
 
 def download_data(ticker: str) -> dict:
     """
@@ -43,6 +44,7 @@ def download_data(ticker: str) -> dict:
             print(f"Data acquisition error for ticker '{ticker}': no data found")
             return {} # Return an empty dictionary if no data was found
         
+        print(f"Data acquired for ticker {ticker}")
         return response
     except Exception as e:
         print(f"Data acquisition error for ticker {ticker}: {e}")
@@ -52,7 +54,6 @@ def download_data(ticker: str) -> dict:
 def process_data(data: dict) -> dict:
     """
     Processes the data and returns a dictionary with the minimum, maximum, average, and median closing prices.
-    Not implemented yet.
     """
     if data == {}: # If the data is empty (data acquisition failed), return an empty dictionary
         return {}
@@ -84,9 +85,17 @@ def main():
         stats = process_data(data) # Process the data to extract statistics
         if stats: # If the stats are not empty (data processing was successful), add them to the list
             stats_list.append(stats)
+    
+    print(dumps(stats_list, indent=4)) # Print the extracted stats in JSON format with indentation
+    
+    # Write the extracted stats to a JSON file
+    try:    
+        with open("stocks.json", "w") as file:
+            dump(stats_list, file, indent=4)
+            print("\nData written to stocks.json")
+    except Exception as e:
+        print(f"Error writing to file: {e}")
         
-    print(dumps(stats_list, indent=4)) # Print the stat list in JSON format (for testing)
         
-
 if __name__ == "__main__": # Run the main function if the script is executed directly and not imported
     main()
